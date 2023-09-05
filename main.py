@@ -1,3 +1,9 @@
+#
+# API Server powered by FastAPI
+#
+# https://api.env.cs.i.nagoya-u.ac.jp/
+#
+
 from fastapi import FastAPI
 import api_v1, api_v2
 
