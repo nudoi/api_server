@@ -158,3 +158,58 @@ async def read_data(data: str = 'multi_env_sensor', format: str = 'csv', start_d
 
     else:
         return "Invalid data specified."
+    
+
+@router.get("/api/v2/weather_forecast")
+async def read_weather_forecast_data(format: str = 'csv'):
+
+    # get current date
+    start_date = datetime.now().date()
+    # calc end date
+    end_date = start_date + timedelta(days=5)
+
+    # connect to database
+    conn = sqlite3.connect('../weather_forecast.db')
+    cursor = conn.cursor()
+
+    # get data from database
+    cursor.execute('''
+        SELECT * FROM weather_forecast
+        WHERE timestamp >= ? AND timestamp < ?
+    ''', (start_date, end_date))
+
+    forecast_data = cursor.fetchall()
+    conn.close() # close database connection
+
+    # return data in specified format
+    if (format == 'csv'):
+
+        stream = io.StringIO()
+
+        writer = csv.writer(stream)
+
+        writer.writerow(['timestamp', 'temperature', 'weather_description'])
+
+        for row in forecast_data:
+            id, city_name, timestamp, temperature, weather_description = row
+            writer.writerow([timestamp, temperature, weather_description])
+
+        return StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
+    
+    elif (format == 'json'):
+
+        data = []
+
+        for row in forecast_data:
+            id, city_name, timestamp, temperature, weather_description = row
+            entry = {
+                "timestamp": timestamp,
+                "temperature": temperature,
+                "weather_description": weather_description
+            }
+            data.append(entry)
+
+        # convert data to json
+        json_data = json.dumps(data, indent=4)
+
+        return JSONResponse(json_data)
