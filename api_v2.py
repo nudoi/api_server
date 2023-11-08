@@ -1,6 +1,7 @@
 from typing import Union
 from datetime import datetime, timedelta
 import sqlite3
+import mysql.connector
 import json, csv
 import io
 import numpy as np
@@ -81,6 +82,128 @@ async def read_latest_24h_data(data: str = 'multi_env_sensor', format: str = 'cs
 
         else:
             return "Invalid format specified. Valid formats are 'csv' and 'json'."
+
+    elif(data == 'env_sensor'):
+
+        # connect to database
+        conn = sqlite3.connect('../env_sensor_data.db')
+        c = conn.cursor()
+
+        # get latest timestamp
+        c.execute("SELECT MAX(timestamp) FROM weather")
+        latest_timestamp = c.fetchone()[0]
+        latest_timestamp = datetime.strptime(latest_timestamp, '%Y-%m-%d %H:%M:%S.%f')
+
+        # calc latest timestamp - 24h
+        twenty_four_hours_ago = latest_timestamp - timedelta(hours=24)
+        #print(str(twenty_four_hours_ago))
+
+        # get latest 24h data from database
+        c.execute("SELECT timestamp, temperature, humidity, pressure FROM weather WHERE timestamp >= ?" , (twenty_four_hours_ago,))
+        data = c.fetchall()
+
+        # close database connection
+        c.close()
+
+        # split data into lists
+        timestamp = [row[0] for row in data]
+        #temperature = [row[1] for row in data]
+        temperature = [row[1] if row[1] > -50 else np.nan for row in data]
+        humidity = [row[2] if row[2] >= 0 else np.nan for row in data]
+        pressure = [row[3] if row[3] > 800 else np.nan for row in data]
+
+        # return data in specified format
+        if (format == 'csv'):
+
+            stream = io.StringIO()
+
+            writer = csv.writer(stream)
+
+            writer.writerow(['timestamp', 'temperature', 'humidity', 'pressure'])
+
+            for ts, temp, hum, pres in zip(timestamp, temperature, humidity, pressure):
+                writer.writerow([ts, temp, hum, pres])
+
+            return StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
+        
+        elif (format == 'json'):
+
+            data = []
+
+            for ts, temp, hum, pres in zip(timestamp, temperature, humidity, pressure):
+                entry = {
+                    "timestamp": ts,
+                    "temperature": temp,
+                    "humidity": hum,
+                    "pressure": pres
+                }
+                data.append(entry)
+                    
+            # convert data to json
+            json_data = json.dumps(data, indent=4)
+
+            return JSONResponse(json_data)
+
+        else:
+            return "Invalid format specified. Valid formats are 'csv' and 'json'."
+
+        
+    elif(data == 'zentra_cloud'):
+        try:
+            # connect to mysql database
+            conn = mysql.connector.connect(user='root', password='@Namazu1', host='192.168.0.32', database='zentra')
+            c = conn.cursor()
+
+            # get latest timestamp
+            c.execute("SELECT MAX(timestamp) FROM data")
+            latest_timestamp = c.fetchone()[0]
+            latest_timestamp = datetime.strptime(latest_timestamp, '%Y-%m-%d %H:%M:%S.%f')
+
+            # calc latest timestamp - 24h
+            twenty_four_hours_ago = latest_timestamp - timedelta(hours=24)
+            #print(str(twenty_four_hours_ago))
+
+            # get latest 24h data from database
+            c.execute("SELECT timestamp, temperature FROM data WHERE timestamp >= ?" , (twenty_four_hours_ago,))
+            data = c.fetchall()
+
+            # split data into lists
+            timestamps = [row[0] for row in data]
+            temperatures = [row[1] if row[1] > -50 else np.nan for row in data]
+
+            # return data in specified format
+            if (format == 'csv'):
+
+                stream = io.StringIO()
+
+                writer = csv.writer(stream)
+
+                writer.writerow(['timestamp', 'temperature'])
+
+                for ts, temp in zip(timestamps, temperatures):
+                    writer.writerow([ts, temp])
+
+                return StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
+            
+            elif (format == 'json'):
+
+                data = []
+
+                for ts, temp in zip(timestamps, temperatures):
+                    entry = {
+                        "timestamp": ts,
+                        "temperature": temp
+                    }
+                    data.append(entry)
+                        
+                # convert data to json
+                json_data = json.dumps(data, indent=4)
+
+                return JSONResponse(json_data)
+
+        finally:
+            # close database connection
+            conn.close()
 
     else:
         return "Invalid data specified."
