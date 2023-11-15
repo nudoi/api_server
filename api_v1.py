@@ -11,7 +11,7 @@ router = APIRouter()
 
 
 @router.get("/api/v1/latest_24h")
-async def read_latest_24h_data():
+async def get_latest_24h_data():
 
     # connect to database
     conn = sqlite3.connect('../env_data.db')
@@ -61,7 +61,7 @@ async def read_latest_24h_data():
 
 
 @router.get("/api/v1/start_date={start_date}")
-async def read_data(start_date: str):
+async def get_data(start_date: str):
 
     # connect to database
     conn = sqlite3.connect('../env_data.db')
@@ -102,7 +102,7 @@ async def read_data(start_date: str):
 
 
 @router.get("/api/v1/start_date={start_date}/end_date={end_date}")
-async def read_data(start_date: str, end_date: str):
+async def get_data(start_date: str, end_date: str):
 
     # connect to database
     conn = sqlite3.connect('../env_data.db')

@@ -1,7 +1,11 @@
 #
 # API Server powered by FastAPI
 #
-# https://api.env.cs.i.nagoya-u.ac.jp/
+#   https://api.env.cs.i.nagoya-u.ac.jp/
+#
+#
+# author:  doi (https://www.env.cs.i.nagoya-u.ac.jp/~doi/)
+# license: MIT
 #
 
 from fastapi import FastAPI
@@ -9,7 +13,6 @@ import api_v1, api_v2
 import uvicorn
 
 app = FastAPI(port=58080)
-
 
 @app.get("/")
 def read_root():
