@@ -22,6 +22,14 @@ curl -X 'GET' \
   -H 'accept: application/json'
 ```
 
+### 指定した期間の平均気温の推移を取得する
+
+```
+curl -X 'GET' \
+  'https://api.env.cs.i.nagoya-u.ac.jp/api/v2/mean_temp?data=meter_zl6&format=csv&start_date=2023-09-01&end_date=2024-01-31' \
+  -H 'accept: text/csv'
+```
+
 ## その他
 
 詳細はこちら: [https://iot.env.cs.i.nagoya-u.ac.jp/api_info/](https://iot.env.cs.i.nagoya-u.ac.jp/api_info/)
