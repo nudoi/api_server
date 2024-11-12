@@ -8,7 +8,7 @@ import mysql.connector
 
 # set headers for api request
 headers = {
-    "Authorization": "Token 16a5f15602e47cdd95326d09831bcd347195f996"
+    "Authorization": "**********", # replace with your own api key
 }
 
 # fetch data from zentra cloud
